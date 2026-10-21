@@ -1,10 +1,10 @@
-Multi-Tool Autonomous Agent
+### Multi-Tool Autonomous Agent
 A LangChain-powered autonomous AI agent that decides which tool to use, when, and why — solving compound research queries through a thought → action → observation reasoning loop.
 
 Built as a Task 3 deliverable for the Multi-Tool Autonomous AI Agent assignment.
 
-📋 Table of Contents
-Overview
+### 📋 Table of Contents
+## Overview
 
 Features
 
@@ -30,9 +30,9 @@ Troubleshooting
 
 Limitations & Future Work
 
-License
+### License
 
-🧭 Overview
+### 🧭 Overview
 This project implements an autonomous AI agent using LangChain and OpenAI's gpt-4o-mini. The agent is equipped with three distinct tools:
 
 A safe Python calculator (AST-based — no eval())
