@@ -1,0 +1,5 @@
+Hi, I'm Jane Doe. You can reach me at jane.doe@email.com or 555-0199.
+I have been working in software engineering for about 6 and a half years.
+Currently, I am a Senior Engineer at Google.
+My core skills include Python, Machine Learning, SQL, and Kubernetes.
+I also have strong communication and leadership abilities.

@@ -1,0 +1,8 @@
+Received a bill from Tech Supplies Inc.
+Invoice ID: 998877
+Date: November 5th, 2024
+Items:
+- 1x Dell XPS Laptop @ $1500.00 = $1500.00
+- 3x Wireless Mouse @ $25.00 = $75.00
+- 1x Monitor @ $300.00 = $300.00
+Total due: $1875.00
