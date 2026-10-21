@@ -1,323 +1,417 @@
-### Multi-Tool Autonomous Agent
-A LangChain-powered autonomous AI agent that decides which tool to use, when, and why — solving compound research queries through a thought → action → observation reasoning loop.
+# Multi-Tool Autonomous AI Agent
 
-Built as a Task 3 deliverable for the Multi-Tool Autonomous AI Agent assignment.
+A LangChain-powered autonomous AI agent that selects and uses tools to solve multi-step queries through a Thought → Action → Observation loop.
 
-### 📋 Table of Contents
-## Overview
+Built as **Task 3** for the Multi-Tool Autonomous AI Agent assignment.
 
-Features
+## 📋 Table of Contents
 
-Project Structure
+- [Overview](#overview)
+- [Features](#features)
+- [Project Structure](#project-structure)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Usage](#usage)
+- [Example Queries](#example-queries)
+- [Design Decisions](#design-decisions)
+- [Tool Reference](#tool-reference)
+- [Testing](#testing)
+- [Troubleshooting](#troubleshooting)
+- [Limitations and Future Work](#limitations-and-future-work)
+- [License](#license)
 
-Prerequisites
+## 🧭 Overview
 
-Installation
+This project implements an autonomous AI agent using LangChain and Google Gemini via `langchain-google-genai`.
 
-Configuration
+The agent is equipped with three tools:
 
-Usage
+1. **Safe Python Calculator:** Evaluates mathematical expressions using an AST-based approach without `eval()`.
+2. **Sandboxed Local File Reader:** Reads local text files while preventing path-traversal attacks.
+3. **Web Search:** Retrieves search results using DuckDuckGo with retry logic.
 
-Example Queries
+Given a user query, the agent determines which tools are needed, executes them in sequence when necessary, and generates a final response based on the results.
 
-Design Decisions
+### Example
 
-Tool Reference
+**User query:**
 
-Testing
+"Search for the price of an iPhone 16, then calculate 10% tax on it."
 
-Troubleshooting
+**Expected workflow:**
 
-Limitations & Future Work
+1. Search the web for the product price.
+2. Extract the relevant price from the search results.
+3. Calculate the price including 10% tax.
+4. Return the final answer.
 
-### License
+The actual result depends on the search results available when the agent runs.
 
-### 🧭 Overview
-This project implements an autonomous AI agent using LangChain and OpenAI's gpt-4o-mini. The agent is equipped with three distinct tools:
+## ✨ Features
 
-A safe Python calculator (AST-based — no eval())
+| Feature | Description |
+|---|---|
+| Autonomous Tool Selection | The language model selects tools based on the user's query. |
+| Multi-Step Execution | Supports workflows involving multiple tools. |
+| Safe Calculator | Uses AST-based expression evaluation instead of `eval()`. |
+| Sandboxed File Reader | Blocks attempts to access files outside the permitted project directory. |
+| Web Search | Uses DuckDuckGo with retry logic. |
+| Error Handling | Handles common tool and search failures. |
+| Configurable Agent | Supports model and iteration-limit configuration. |
+| Automated Tests | Includes Pytest tests for tool functionality and safety. |
 
-A sandboxed local file reader (path-traversal protected)
+## 📁 Project Structure
 
-A real-time web search tool (DuckDuckGo with retry logic)
-
-Given a user query, the agent autonomously decides whether it needs one tool, multiple tools in sequence, or none at all — and returns a final answer after verifying intermediate results.
-
-Example of what it does:
-
-User: "Search for the price of an iPhone 16, then calculate 10% tax on it."
-
-Agent reasoning (printed live):
-
-Thought: I need current pricing → call web_search
-
-Action: web_search("iPhone 16 price 2024")
-
-Observation: "iPhone 16 starts at $799..."
-
-Thought: Now calculate 10% tax → call python_calculator
-
-Action: python_calculator("799 * 1.10")
-
-Observation: "878.9"
-
-Final Answer: "The iPhone 16 costs $799, and with 10% tax it totals $878.90."
-
-✨ Features
-Feature	Description
-🧠 Autonomous tool selection	The LLM decides which tool (if any) to invoke per step
-🔁 Multi-step reasoning	Chains tools together (e.g., search → calculate)
-🛡️ Safe calculator	AST-based evaluator — immune to code injection
-🔒 Sandboxed file reader	Rejects ../ path traversal attempts
-🌐 Real-time web search	DuckDuckGo with 3× retry + exponential backoff
-📊 Transparent reasoning	Prints the full Thought → Action → Observation loop
-✅ Tested	Pytest suite covering tool safety and correctness
-📦 Pinned dependencies	Reproducible installs across machines
-📁 Project Structure
-text
+```text
 autonomous-agent/
 │
-├── .env                  # Your API keys (DO NOT COMMIT)
-├── .env.example          # Template — safe to commit
-├── .gitignore            # Excludes .env, __pycache__, .venv
-├── requirements.txt      # Pinned dependencies
-├── README.md             # This file
-├── main.py               # Entry point & agent loop
+├── .env
+├── .env.example
+├── .gitignore
+├── requirements.txt
+├── README.md
+├── main.py
 │
 ├── tools/
-│   ├── __init__.py       # Central tool registry
-│   ├── calculator.py     # Safe AST-based math evaluator
-│   ├── file_reader.py    # Sandboxed project-directory reader
-│   └── web_search.py     # DuckDuckGo with retry
+│   ├── __init__.py
+│   ├── calculator.py
+│   ├── file_reader.py
+│   └── web_search.py
 │
 └── tests/
-    └── test_tools.py     # Pytest smoke tests
-Why so lean? LangChain's AgentExecutor handles the reasoning loop, so the codebase focuses on tool definitions and agent configuration rather than orchestration. Every file has one responsibility.
+    └── test_tools.py
+```
 
-🛠 Prerequisites
-Python 3.10+ (uses match-style AST walking and type union syntax)
+**File descriptions:**
 
+- `main.py`: Configures and runs the autonomous agent.
+- `tools/calculator.py`: Implements safe mathematical expression evaluation.
+- `tools/file_reader.py`: Implements restricted local file access.
+- `tools/web_search.py`: Implements DuckDuckGo web search.
+- `tests/test_tools.py`: Tests calculator and file-reader behavior.
+- `.env.example`: Provides a template for environment variables.
+- `requirements.txt`: Lists the project's Python dependencies.
 
-Model: Google Gemini 2.0 Flash via langchain-google-genai
-Get a key: https://aistudio.google.com/apikey (free tier available)
+## 🛠️ Prerequisites
 
-pip and venv (bundled with Python)
+Before running the project, ensure you have:
 
-🚀 Installation
-1. Clone and enter the project
-bash
-git clone <your-repo-url> autonomous-agent
+- Python 3.10 or later, compatible with the installed dependencies.
+- pip package manager.
+- A Google Gemini API key.
+- Internet access for model requests and web searches.
+
+Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).
+
+## 🚀 Installation
+
+### 1. Clone the repository
+
+Replace the placeholder with your actual repository URL.
+
+```bash
+git clone <your-repository-url>
 cd autonomous-agent
-2. Create a virtual environment
-bash
-# macOS / Linux
-python3 -m venv .venv
-source .venv/bin/activate
+```
 
-# Windows (PowerShell)
+### 2. Create a virtual environment
+
+**Windows PowerShell:**
+
+```powershell
 python -m venv .venv
 .venv\Scripts\Activate.ps1
-3. Install dependencies
-bash
+```
+
+**macOS/Linux:**
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+### 3. Install dependencies
+
+```bash
+python -m pip install --upgrade pip
 pip install -r requirements.txt
-⚙️ Configuration
-1. Create your .env file
-bash
+```
+
+## ⚙️ Configuration
+
+### 1. Create the environment file
+
+Create a file named `.env` in the project root, or copy the example file if it exists.
+
+**Windows PowerShell:**
+
+```powershell
+Copy-Item .env.example .env
+```
+
+**macOS/Linux:**
+
+```bash
 cp .env.example .env
-2. Add your API key
-Open .env and replace the placeholder:
+```
 
-bash
-GOOGLE_API_KEY=sk-proj-your-actual-key-here
-⚠️ Never commit .env. It's already listed in .gitignore.
+### 2. Add your API key
 
-3. (Optional) Add test data
-Create a small file to test the file reader tool:
+Open `.env` and add your actual Gemini API key:
 
-bash
-echo "Project: Phoenix\nBudget: 5000\nStatus: Testing" > data.txt
-▶️ Usage
-Start the agent
-bash
+```env
+GOOGLE_API_KEY=your_actual_google_api_key
+```
+
+Do not include quotation marks unless your configuration requires them.
+
+**Security note:** Never upload your real API key to GitHub. Keep `.env` in `.gitignore` and commit only `.env.example` with a placeholder value.
+
+### 3. Verify your model configuration
+
+Ensure `main.py` uses a Gemini model currently supported by your installed `langchain-google-genai` package and available to your API key.
+
+Model availability can change, so check the current Google Gemini documentation if you encounter a model-not-found error.
+
+## ▶️ Usage
+
+From the project root, activate your virtual environment and run:
+
+```bash
 python main.py
-You'll see:
+```
 
-text
+If the application starts successfully, enter a query in the terminal.
+
+Example:
+
+```text
 🤖 Autonomous Agent Ready. Type 'exit' to quit.
 
-You:
-Interact
-Type any query and press Enter. The agent will:
+You: What is 17 * 23 + 4?
+```
 
-Print its reasoning steps (thoughts, tool calls, observations)
+The agent should select the calculator tool when appropriate and return a response.
 
-Return a final answer prefixed with ✅
+To stop the application, enter:
 
-Type exit or quit to leave, or Ctrl+C to interrupt.
+```text
+exit
+```
 
-💬 Example Queries
-Try these to see different tool combinations in action:
+You can also use `quit` if supported by your implementation.
 
-Single-tool queries
-Query	Tool used
-What is 17 * 23 + 4?	python_calculator
-Read data.txt and tell me the budget.	local_file_reader
-Who won the 2024 Nobel Prize in Physics?	web_search
-Multi-step queries (the interesting ones)
-Query	Tools chained
-Read data.txt, find the budget, and calculate 15% of it.	file_reader → calculator
-Search for the price of a MacBook Air M3, then calculate 10% tax.	web_search → calculator
-Look up the population of Tokyo, then find 5% of it.	web_search → calculator
-Calculate (47 * 3) - 12, then search for what year that number is associated with.	calculator → web_search
-The last two demonstrate autonomous chaining — the agent figures out the sequence itself.
+## 💬 Example Queries
 
-🏗 Design Decisions
-Each architectural choice was made with a specific failure mode in mind.
+### Single-tool queries
 
-1. Safe calculator — no eval()
-Problem: The naive approach (eval(expression)) allows code execution — __import__('os').system('rm -rf /') runs if you're not careful.
+| Query | Expected Tool |
+|---|---|
+| What is 17 * 23 + 4? | Python Calculator |
+| Read `data.txt` and tell me the budget. | Local File Reader |
+| Search for the latest LangChain documentation. | Web Search |
 
-Solution: Parse the expression into an AST and recursively evaluate only whitelisted nodes (ast.BinOp, ast.Constant, ast.UnaryOp). Anything else — function calls, attribute access, imports — raises an error and returns a safe string.
+### Multi-step queries
 
-python
-# ❌ Rejected
-result = eval(user_input)
+| Query | Expected Tool Sequence |
+|---|---|
+| Read `data.txt`, find the budget, and calculate 15% of it. | File Reader → Calculator |
+| Search for a laptop price, then calculate 10% tax. | Web Search → Calculator |
+| Search for Tokyo's population and calculate 5% of it. | Web Search → Calculator |
+| Calculate a mathematical expression, then search for related information. | Calculator → Web Search |
 
-# ✅ Accepted
-tree = ast.parse(user_input, mode="eval")
-result = _safe_eval(tree.body)
-2. Sandboxed file reader — no path traversal
-Problem: open(file_path) allows ../../etc/passwd.
+Actual tool selection and execution depend on the model's response and the agent configuration.
 
-Solution: Resolve the path against a fixed project root, then verify the resolved path still starts with that root.
+## 🏗️ Design Decisions
 
-python
-resolved = (_PROJECT_ROOT / file_path).resolve()
-if not str(resolved).startswith(str(_PROJECT_ROOT)):
-    return "Error: Access outside the project directory is denied."
-Additionally enforces a 1MB file-size limit to prevent memory issues.
+### 1. Safe Calculator
 
-3. Retry-wrapped web search
-Problem: DuckDuckGo occasionally returns rate-limit errors or times out.
+**Problem:** Python's `eval()` can execute arbitrary code if used with untrusted input.
 
-Solution: Three retry attempts with exponential backoff (1s → 2s → 3s). The agent receives a clean error string rather than crashing.
+**Solution:** Parse mathematical expressions using Python's Abstract Syntax Tree (AST) and evaluate only explicitly supported operations.
 
-4. verbose=True on the AgentExecutor
-Why: The assignment explicitly requires displaying the reasoning chain. LangChain's verbose mode prints every thought, action, and observation — demonstrating the agent is genuinely autonomous, not just a prompt wrapper.
+Supported operations may include:
 
-5. max_iterations=8 cap
-Why: Prevents runaway loops if the model gets confused (e.g., repeatedly calling the same failing tool). Eight iterations is enough for any realistic multi-step query.
+- Addition (`+`)
+- Subtraction (`-`)
+- Multiplication (`*`)
+- Division (`/`)
+- Exponentiation (`**`)
+- Modulo (`%`)
+- Parentheses and unary operators
 
-6. Temperature = 0
-Why: Deterministic tool selection. At temperature 0.7, the same query might choose different tools on different runs, which is confusing for a demo or test.
+Function calls, imports, attribute access, and unsupported syntax should be rejected.
 
-🔧 Tool Reference
-python_calculator(expression: str) -> str
-Evaluates arithmetic expressions safely.
+### 2. Sandboxed File Reader
 
-Allowed: +, -, *, /, **, %, parentheses, unary minus/plus
+**Problem:** Unrestricted file access can expose files outside the intended project directory.
 
-Forbidden: function calls, names, attribute access, string literals
+**Solution:** Resolve requested paths against a fixed project root and reject paths that escape the permitted directory.
 
-Example: python_calculator.invoke("(3 + 5) * 2") → "16"
+The implementation also includes a file-size limit to help prevent excessive memory usage.
 
-local_file_reader(file_path: str) -> str
-Reads a UTF-8 text file inside the project directory.
+### 3. Retry-Wrapped Web Search
 
-Sandboxed: Only files under the project root
+**Problem:** Web searches may fail because of network errors, timeouts, or rate limits.
 
-Size limit: 1 MB
+**Solution:** Retry selected failures with delays between attempts and return a manageable error message if all attempts fail.
 
-Example: local_file_reader.invoke("data.txt") → file contents
+### 4. Iteration Limit
 
-web_search(query: str) -> str
-Real-time search via DuckDuckGo.
+The agent can use a maximum iteration limit to prevent excessive repeated tool calls.
 
-Retries: 3× with backoff
+A limit of eight iterations is suitable for a demonstration, although the appropriate value depends on the complexity of the task.
 
-Example: web_search.invoke("LangChain release notes") → top results as text
+### 5. Low-Temperature Configuration
 
-🧪 Testing
-The project includes a Pytest suite covering tool safety and correctness.
+A low temperature can make tool selection more consistent, although it does not guarantee identical results on every run.
 
-Run tests
-bash
+## 🔧 Tool Reference
+
+### `python_calculator(expression: str)`
+
+Evaluates supported arithmetic expressions.
+
+**Example:**
+
+```python
+python_calculator.invoke("(3 + 5) * 2")
+```
+
+Expected result:
+
+```text
+16
+```
+
+Only explicitly permitted mathematical syntax should be accepted.
+
+### `local_file_reader(file_path: str)`
+
+Reads a text file located inside the permitted project directory.
+
+**Example:**
+
+```python
+local_file_reader.invoke("data.txt")
+```
+
+The tool should reject missing files, oversized files, and paths attempting to access locations outside the permitted directory.
+
+### `web_search(query: str)`
+
+Searches the web using DuckDuckGo.
+
+**Example:**
+
+```python
+web_search.invoke("LangChain documentation")
+```
+
+Results depend on network availability and the search service's response.
+
+## 🧪 Testing
+
+Run the test suite from the project root:
+
+```bash
 pytest tests/ -v
-Expected output
-text
-tests/test_tools.py::test_calculator_basic PASSED
-tests/test_tools.py::test_calculator_precedence PASSED
-tests/test_tools.py::test_calculator_rejects_code_injection PASSED
-tests/test_tools.py::test_file_reader_missing_file PASSED
-tests/test_tools.py::test_file_reader_blocks_traversal PASSED
+```
 
-============================== 5 passed in 0.42s ==============================
-What's covered
-Test	Verifies
-test_calculator_basic	"2 + 2" → "4"
-test_calculator_precedence	Parentheses respected: "(3+5)*2" → "16"
-test_calculator_rejects_code_injection	"__import__('os').system('ls')" returns an error, not execution
-test_file_reader_missing_file	Graceful error on nonexistent files
-test_file_reader_blocks_traversal	"../../etc/passwd" is denied
-Note: Tests do not require an API key — they only exercise the tool functions directly.
+The project is intended to test cases such as:
 
-🔧 Troubleshooting
-Error: GOOGLE_API_KEY missing
-You haven't created .env yet. Run cp .env.example .env and paste your key.
+- Basic calculator operations.
+- Mathematical operator precedence.
+- Rejection of unsafe calculator expressions.
+- Handling missing files.
+- Blocking path-traversal attempts.
 
-Or you created .env but forgot load_dotenv() ran — check that main.py is being run from the project root.
+Example test names may include:
 
-Search failed after 3 attempts
-DuckDuckGo is rate-limiting you. Wait a minute and retry.
+```text
+test_calculator_basic
+test_calculator_precedence
+test_calculator_rejects_code_injection
+test_file_reader_missing_file
+test_file_reader_blocks_traversal
+```
 
-Or your network blocks the duckduckgo.com domain. Try a VPN or switch to Tavily (see Future Work).
+The actual test results depend on the implementation and the tests included in the repository.
 
-Agent keeps calling the same tool
-Rare at temperature=0, but possible with ambiguous prompts. Be more specific: instead of "tell me about iPhone 16", say "search for the iPhone 16 release date, then calculate how many days until launch."
+## 🔧 Troubleshooting
 
-Agent stopped due to iteration limit or time limit
-The agent hit max_iterations=8. If your query genuinely needs more steps, raise the cap in main.py — but first, split the query into smaller parts.
+### Error: `GOOGLE_API_KEY` missing
 
-ModuleNotFoundError: No module named 'tools'
-You're running main.py from outside the project directory. cd into the project root first.
+- Check that `.env` exists in the project root.
+- Confirm the key is correctly named `GOOGLE_API_KEY`.
+- Ensure the application loads environment variables before initializing the model.
 
-🚧 Limitations & Future Work
-This is a demonstration-grade agent, not a production service. Honest limitations:
+### Error: Model not found
 
-Known limitations
-No memory across turns. Each invoke() is stateless. If you ask "what about the other one?", the agent has no idea what "the other one" refers to.
+- Check that the configured Gemini model is still available.
+- Update the model identifier if required.
+- Verify that your installed LangChain integration supports the selected model.
 
-No conversation history. Same reason — a proper agent would use ConversationBufferMemory.
+### Error: Search failed
 
-DuckDuckGo has no SLA. Not suitable for production reliability.
+- Check your internet connection.
+- Retry after a short delay if the service is rate-limiting requests.
+- Review the search tool's error-handling configuration.
 
-Single-file agent config. Prompt, model, and tool list are hardcoded in main.py. A production version would externalize these.
+### Error: `ModuleNotFoundError: No module named 'tools'`
 
-No streaming. Responses appear all at once rather than token-by-token.
+- Open the terminal in the project root.
+- Activate the project's virtual environment.
+- Run `python main.py` from the directory containing `main.py` and the `tools` folder.
 
-If extended, the next priorities would be
-Add conversation memory — ConversationBufferMemory or ConversationSummaryMemory
+### Agent stops at the iteration limit
 
-Swap DuckDuckGo for Tavily — better quality, structured results, SLA
+The agent may have reached its configured maximum number of iterations. Simplify the query or adjust the limit if appropriate.
 
-Add structured logging — JSON logs of every tool call for post-hoc debugging
+## 🚧 Limitations and Future Work
 
-Add a Streamlit / FastAPI UI — turn the CLI into something demo-able
+This project is a demonstration of tool-using AI agents rather than a production-ready service.
 
-Add tracing — LangSmith integration for visualizing the reasoning chain
+### Current Limitations
 
-Dockerize — Dockerfile + docker-compose.yml for one-command deploy
+- No persistent conversation memory unless explicitly implemented.
+- No guaranteed accuracy of model-generated responses.
+- Web search depends on an external service.
+- Tool selection depends on model behavior.
+- API access may have usage limits or costs.
+- A command-line interface may be less accessible than a graphical interface.
 
-These were deliberately out of scope for the assignment to keep the codebase readable and reviewable.
+### Future Improvements
 
-📄 License
-MIT — free to use, modify, and learn from.
+Potential extensions include:
 
-🙏 Acknowledgements
-LangChain for the agent framework
+1. Add conversation memory for follow-up questions.
+2. Build a Streamlit or FastAPI interface.
+3. Improve structured logging and error reporting.
+4. Add LangSmith tracing for agent execution monitoring.
+5. Introduce more tools with appropriate safety controls.
+6. Add Docker support for easier setup.
+7. Expand automated tests for edge cases and integration behavior.
 
-Model: Google Gemini 2.0 Flash via langchain-google-genai
-Get a key: https://aistudio.google.com/apikey (free tier available)
+These improvements can make the agent easier to use, debug, and extend.
 
-DuckDuckGo for a free search API
+## 📄 License
 
+This project is licensed under the MIT License. Add a `LICENSE` file containing the appropriate MIT License text to the repository if it is not already present.
+
+## 🙏 Acknowledgements
+
+- [LangChain](https://www.langchain.com/) for the agent framework.
+- [Google AI Studio](https://aistudio.google.com/) for Gemini API access.
+- [DuckDuckGo](https://duckduckgo.com/) for web search.
+- [Pytest](https://pytest.org/) for automated testing.
+
+---
+
+**Project:** Multi-Tool Autonomous AI Agent  
+**Task:** Task 3  
+**Language:** Python  
+**Framework:** LangChain  
+**Model Provider:** Google Gemini  
+**Search Provider:** DuckDuckGo
